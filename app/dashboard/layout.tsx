@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Users, DollarSign, LayoutDashboard, LogOut } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
@@ -25,7 +26,7 @@ export default async function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 relative flex flex-col">
         <div className="flex h-16 shrink-0 items-center px-6 border-b border-zinc-800">
-          <h1 className="text-xl font-bold text-slate-100 tracking-tight">Wexlogic CRM</h1>
+          <Image src="/logo-white.png" alt="Wexlogic Logo" width={140} height={35} className="object-contain" priority />
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-4">Menu</p>
