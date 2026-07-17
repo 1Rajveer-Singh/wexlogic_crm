@@ -25,10 +25,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8 rounded-xl bg-zinc-900 border border-zinc-800 p-10 shadow-2xl">
         <div>
-          <div className="flex justify-center mb-6">
-            <Image src="/logo-white.png" alt="Wexlogic Logo" width={220} height={55} className="object-contain" priority />
+          <div className="flex justify-center mb-2 mt-2">
+            <Image src="/logo-horizontal.png" alt="Wexlogic Logo" width={240} height={84} className="object-contain" priority />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-100">
+          <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-100">
             Wexlogic CRM
           </h2>
           <p className="mt-2 text-center text-sm text-zinc-400">

@@ -25,8 +25,8 @@ export default async function DashboardLayout({
     <div className="flex h-screen bg-zinc-950 text-slate-100">
       {/* Sidebar */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 relative flex flex-col">
-        <div className="flex h-16 shrink-0 items-center px-6 border-b border-zinc-800">
-          <Image src="/logo-white.png" alt="Wexlogic Logo" width={140} height={35} className="object-contain" priority />
+        <div className="flex h-16 shrink-0 items-center justify-center border-b border-zinc-800 px-4">
+          <Image src="/logo-horizontal.png" alt="Wexlogic Logo" width={160} height={56} className="object-contain" priority />
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-4">Menu</p>
