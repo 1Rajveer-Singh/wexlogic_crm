@@ -154,7 +154,6 @@ export default async function DashboardPage() {
               <>
                 <PieChartComponent
                   data={partnerPieData}
-                  formatValue={formatINR}
                 />
                 <div className="mt-5 divide-y divide-zinc-800">
                   {partnerPieData.map((p) => (
@@ -196,7 +195,6 @@ export default async function DashboardPage() {
             pendingAmount={stats.pendingRevenue}
             paidCount={stats.paidCount}
             pendingCount={stats.pendingCount}
-            formatValue={formatINR}
           />
 
           {/* Quick info strip */}
@@ -325,7 +323,7 @@ export default async function DashboardPage() {
             <p className="text-xs text-zinc-500 uppercase tracking-wider font-medium mb-5">
               Revenue share by service
             </p>
-            <PieChartComponent data={servicePieData} formatValue={formatINR} />
+            <PieChartComponent data={servicePieData} />
           </div>
         )}
       </div>

@@ -7,15 +7,20 @@ type StatsBarProps = {
   pendingAmount: number;
   paidCount: number;
   pendingCount: number;
-  formatValue: (v: number) => string;
 };
+
+const formatINR = (amount: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
 
 export function StatsBar({
   paidAmount,
   pendingAmount,
   paidCount,
   pendingCount,
-  formatValue,
 }: StatsBarProps) {
   const [animated, setAnimated] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -35,7 +40,7 @@ export function StatsBar({
       <div>
         <div className="flex justify-between text-xs text-zinc-500 mb-2">
           <span>Paid vs Pending</span>
-          <span>{formatValue(total)} total</span>
+          <span>{formatINR(total)} total</span>
         </div>
         <div className="h-3 w-full rounded-full bg-zinc-800 overflow-hidden flex">
           <div
@@ -63,7 +68,7 @@ export function StatsBar({
             {paidPct.toFixed(1)}%
           </p>
           <p className="text-sm text-emerald-400 font-medium mt-0.5">
-            {formatValue(paidAmount)}
+            {formatINR(paidAmount)}
           </p>
           <p className="text-xs text-zinc-500 mt-1">
             {paidCount} invoice{paidCount !== 1 ? "s" : ""}
@@ -82,7 +87,7 @@ export function StatsBar({
             {pendingPct.toFixed(1)}%
           </p>
           <p className="text-sm text-amber-400 font-medium mt-0.5">
-            {formatValue(pendingAmount)}
+            {formatINR(pendingAmount)}
           </p>
           <p className="text-xs text-zinc-500 mt-1">
             {pendingCount} invoice{pendingCount !== 1 ? "s" : ""}

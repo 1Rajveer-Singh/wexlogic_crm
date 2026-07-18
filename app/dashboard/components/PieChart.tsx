@@ -10,8 +10,14 @@ type PieSlice = {
 
 type PieChartProps = {
   data: PieSlice[];
-  formatValue?: (v: number) => string;
 };
+
+const formatINR = (amount: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
 
 function polarToCartesian(
   cx: number,
@@ -39,7 +45,7 @@ function describeArc(
   return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
 }
 
-export function PieChart({ data, formatValue }: PieChartProps) {
+export function PieChart({ data }: PieChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
@@ -91,7 +97,7 @@ export function PieChart({ data, formatValue }: PieChartProps) {
     return result;
   });
 
-  const fmt = formatValue ?? ((v: number) => v.toLocaleString());
+  const fmt = formatINR;
   const hovered = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
   return (
