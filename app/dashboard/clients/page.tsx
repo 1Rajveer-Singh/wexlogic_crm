@@ -26,7 +26,8 @@ export default async function ClientsPage() {
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-200 sm:pl-6">Name</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Company</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Email</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Added</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Added Date</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Added By</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800 bg-zinc-900">
@@ -38,11 +39,14 @@ export default async function ClientsPage() {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-400">
                         {new Date(client.created_at).toLocaleDateString()}
                       </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-400">
+                        {client.creator?.full_name || "Unknown"}
+                      </td>
                     </tr>
                   ))}
                   {clients.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="py-4 text-center text-sm text-zinc-500">No clients found.</td>
+                      <td colSpan={5} className="py-4 text-center text-sm text-zinc-500">No clients found.</td>
                     </tr>
                   )}
                 </tbody>

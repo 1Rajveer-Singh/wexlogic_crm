@@ -46,7 +46,10 @@ export async function fetchClients() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("clients")
-    .select("*")
+    .select(`
+      *,
+      creator:user_roles!created_by(full_name)
+    `)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -64,7 +67,8 @@ export async function fetchRevenue() {
     .select(`
       *,
       client:clients(name, company_name),
-      service:services(name)
+      service:services(name),
+      creator:user_roles!created_by(full_name)
     `)
     .order("created_at", { ascending: false });
 
@@ -87,9 +91,12 @@ export async function insertClient(prevState: any, formData: FormData) {
     return { error: "Missing required fields" };
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
   const { error } = await supabase
     .from("clients")
-    .insert([{ name, company_name, email }]);
+    .insert([{ name, company_name, email, created_by: user.id }]);
 
   if (error) {
     console.error("Error inserting client:", error);
@@ -112,9 +119,12 @@ export async function insertRevenue(prevState: any, formData: FormData) {
     return { error: "Missing required fields" };
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
   const { error } = await supabase
     .from("revenue")
-    .insert([{ client_id, service_id, amount, status }]);
+    .insert([{ client_id, service_id, amount, status, created_by: user.id }]);
 
   if (error) {
     console.error("Error inserting revenue:", error);
@@ -158,6 +168,21 @@ export type DashboardStats = {
     pendingAmount: number;
     count: number;
   }[];
+  clientBreakdown: {
+    clientName: string;
+    companyName: string;
+    totalAmount: number;
+    paidAmount: number;
+    pendingAmount: number;
+    count: number;
+  }[];
+  userBreakdown: {
+    userId: string | null;
+    userName: string;
+    totalAmount: number;
+    paidAmount: number;
+    pendingAmount: number;
+  }[];
 };
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
@@ -166,7 +191,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   const [revenueRes, clientsRes, servicesRes] = await Promise.all([
     supabase
       .from("revenue")
-      .select("amount, status, service:services(name)"),
+      .select("amount, status, created_by, service:services(name), client:clients(name, company_name), creator:user_roles!created_by(full_name)"),
     supabase.from("clients").select("id", { count: "exact", head: true }),
     supabase.from("services").select("id", { count: "exact", head: true }),
   ]);
@@ -185,11 +210,29 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     string,
     { totalAmount: number; paidAmount: number; pendingAmount: number; count: number }
   > = {};
+  
+  const clientMap: Record<
+    string,
+    { companyName: string; totalAmount: number; paidAmount: number; pendingAmount: number; count: number }
+  > = {};
+
+  const userMap: Record<
+    string,
+    { userName: string; totalAmount: number; paidAmount: number; pendingAmount: number }
+  > = {};
 
   for (const item of revenue) {
     const amount = Number(item.amount);
     const serviceName =
       ((item.service as unknown) as { name: string } | null)?.name ?? "Unknown";
+      
+    const clientData = (item.client as unknown) as { name: string; company_name: string } | null;
+    const clientName = clientData?.name ?? "Unknown";
+    const companyName = clientData?.company_name ?? "";
+    
+    const createdBy = item.created_by as string | null;
+    const creatorData = (item.creator as unknown) as { full_name: string } | null;
+    const userName = creatorData?.full_name ?? "Unknown";
 
     totalRevenue += amount;
     if (item.status === "paid") {
@@ -200,25 +243,44 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
       pendingCount++;
     }
 
+    // Service aggregation
     if (!serviceMap[serviceName]) {
-      serviceMap[serviceName] = {
-        totalAmount: 0,
-        paidAmount: 0,
-        pendingAmount: 0,
-        count: 0,
-      };
+      serviceMap[serviceName] = { totalAmount: 0, paidAmount: 0, pendingAmount: 0, count: 0 };
     }
     serviceMap[serviceName].totalAmount += amount;
     serviceMap[serviceName].count += 1;
-    if (item.status === "paid") {
-      serviceMap[serviceName].paidAmount += amount;
-    } else {
-      serviceMap[serviceName].pendingAmount += amount;
+    if (item.status === "paid") serviceMap[serviceName].paidAmount += amount;
+    else serviceMap[serviceName].pendingAmount += amount;
+    
+    // Client aggregation
+    if (!clientMap[clientName]) {
+      clientMap[clientName] = { companyName, totalAmount: 0, paidAmount: 0, pendingAmount: 0, count: 0 };
     }
+    clientMap[clientName].totalAmount += amount;
+    clientMap[clientName].count += 1;
+    if (item.status === "paid") clientMap[clientName].paidAmount += amount;
+    else clientMap[clientName].pendingAmount += amount;
+    
+    // User aggregation
+    const userKey = createdBy ?? "unknown";
+    if (!userMap[userKey]) {
+      userMap[userKey] = { userName, totalAmount: 0, paidAmount: 0, pendingAmount: 0 };
+    }
+    userMap[userKey].totalAmount += amount;
+    if (item.status === "paid") userMap[userKey].paidAmount += amount;
+    else userMap[userKey].pendingAmount += amount;
   }
 
   const serviceBreakdown = Object.entries(serviceMap)
     .map(([serviceName, stats]) => ({ serviceName, ...stats }))
+    .sort((a, b) => b.totalAmount - a.totalAmount);
+    
+  const clientBreakdown = Object.entries(clientMap)
+    .map(([clientName, stats]) => ({ clientName, ...stats }))
+    .sort((a, b) => b.totalAmount - a.totalAmount);
+    
+  const userBreakdown = Object.entries(userMap)
+    .map(([userId, stats]) => ({ userId: userId === "unknown" ? null : userId, ...stats }))
     .sort((a, b) => b.totalAmount - a.totalAmount);
 
   return {
@@ -230,5 +292,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     totalClients,
     totalServices,
     serviceBreakdown,
+    clientBreakdown,
+    userBreakdown,
   };
 }

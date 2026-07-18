@@ -49,6 +49,7 @@ export default async function RevenuePage() {
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Amount</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Status</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Date Logged</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-200">Added By</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800 bg-zinc-900">
@@ -74,11 +75,14 @@ export default async function RevenuePage() {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-400">
                         {new Date(item.created_at).toLocaleDateString()}
                       </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-400">
+                        {item.creator?.full_name || "Unknown"}
+                      </td>
                     </tr>
                   ))}
                   {revenue.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-4 text-center text-sm text-zinc-500">No revenue records found.</td>
+                      <td colSpan={6} className="py-4 text-center text-sm text-zinc-500">No revenue records found.</td>
                     </tr>
                   )}
                 </tbody>

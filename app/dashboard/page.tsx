@@ -25,12 +25,12 @@ export default async function DashboardPage() {
 
   const isAdmin = role === "admin";
 
-  // Build pie chart data for partners (equal share of collected revenue)
-  const partnerPieData = admins.map((admin, i) => ({
-    name: (admin as any).full_name ?? `Admin ${i + 1}`,
-    value: admins.length > 0 ? stats.paidRevenue / admins.length : 0,
-    color: PARTNER_COLORS[i] ?? "#94a3b8",
-  }));
+  // Build pie chart data for partners based on actual revenue logged
+  const partnerPieData = stats.userBreakdown.map((u, i) => ({
+    name: u.userName,
+    value: u.paidAmount, // show collected revenue for the partner
+    color: PARTNER_COLORS[i % PARTNER_COLORS.length] ?? "#94a3b8",
+  })).filter(u => u.value > 0); // only show those with collected revenue
 
   // Build pie chart data for service breakdown
   const servicePieData = stats.serviceBreakdown.slice(0, 6).map((s, i) => ({
@@ -139,16 +139,12 @@ export default async function DashboardPage() {
               </h3>
             </div>
             <p className="text-xs text-zinc-500 mb-6">
-              Equal share of collected revenue among core partners
+              Total collected revenue by each partner
             </p>
 
-            {admins.length === 0 ? (
+            {partnerPieData.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-zinc-600 text-sm">
-                No admin users found. Set{" "}
-                <code className="mx-1 rounded bg-zinc-800 px-1 py-0.5 font-mono text-xs">
-                  full_name
-                </code>{" "}
-                in user_roles.
+                No revenue logged by admins yet.
               </div>
             ) : (
               <>
@@ -324,6 +320,93 @@ export default async function DashboardPage() {
               Revenue share by service
             </p>
             <PieChartComponent data={servicePieData} />
+          </div>
+        )}
+      </div>
+
+      {/* Row 4: Client-wise Breakdown */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 shadow-sm mt-8">
+        <div className="p-6 flex items-center justify-between border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-blue-400" />
+            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">
+              Client-wise Revenue
+            </h3>
+          </div>
+          <p className="text-xs text-zinc-500">Top clients performance</p>
+        </div>
+
+        {stats.clientBreakdown.length === 0 ? (
+          <div className="py-12 text-center text-sm text-zinc-500">
+            No client data yet.
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-800/60">
+            {stats.clientBreakdown.slice(0, 10).map((client, i) => {
+              const paidPct =
+                client.totalAmount > 0
+                  ? (client.paidAmount / client.totalAmount) * 100
+                  : 0;
+              const totalShare =
+                stats.totalRevenue > 0
+                  ? (client.totalAmount / stats.totalRevenue) * 100
+                  : 0;
+
+              return (
+                <div
+                  key={client.clientName}
+                  className="p-5 hover:bg-zinc-800/20 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-200 truncate">
+                        {client.clientName}
+                      </p>
+                      <p className="text-xs text-zinc-400 mt-0.5 truncate">
+                        {client.companyName}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-1">
+                        {client.count} invoice{client.count !== 1 ? "s" : ""}{" "}
+                        &middot; {totalShare.toFixed(1)}% of total pipeline
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-slate-100">
+                        {formatINR(client.totalAmount)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 justify-end">
+                        <span className="text-xs text-emerald-400">
+                          {formatINR(client.paidAmount)} paid
+                        </span>
+                        {client.pendingAmount > 0 && (
+                          <>
+                            <span className="text-zinc-700">·</span>
+                            <span className="text-xs text-amber-400">
+                              {formatINR(client.pendingAmount)} due
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mini progress bar per client */}
+                  <div className="mt-3 h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${paidPct}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[10px] text-zinc-600">0%</span>
+                    <span className="text-[10px] text-emerald-600">
+                      {paidPct.toFixed(0)}% collected
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
