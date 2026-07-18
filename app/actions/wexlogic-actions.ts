@@ -125,3 +125,110 @@ export async function insertRevenue(prevState: any, formData: FormData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export async function fetchAdminUsers() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("id, role, full_name, created_at")
+    .eq("role", "admin")
+    .order("created_at", { ascending: true })
+    .limit(3);
+
+  if (error) {
+    console.error("Error fetching admin users:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export type DashboardStats = {
+  totalRevenue: number;
+  paidRevenue: number;
+  pendingRevenue: number;
+  paidCount: number;
+  pendingCount: number;
+  totalClients: number;
+  totalServices: number;
+  serviceBreakdown: {
+    serviceName: string;
+    totalAmount: number;
+    paidAmount: number;
+    pendingAmount: number;
+    count: number;
+  }[];
+};
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const supabase = await createClient();
+
+  const [revenueRes, clientsRes, servicesRes] = await Promise.all([
+    supabase
+      .from("revenue")
+      .select("amount, status, service:services(name)"),
+    supabase.from("clients").select("id", { count: "exact", head: true }),
+    supabase.from("services").select("id", { count: "exact", head: true }),
+  ]);
+
+  const revenue = revenueRes.data ?? [];
+  const totalClients = clientsRes.count ?? 0;
+  const totalServices = servicesRes.count ?? 0;
+
+  let totalRevenue = 0;
+  let paidRevenue = 0;
+  let pendingRevenue = 0;
+  let paidCount = 0;
+  let pendingCount = 0;
+
+  const serviceMap: Record<
+    string,
+    { totalAmount: number; paidAmount: number; pendingAmount: number; count: number }
+  > = {};
+
+  for (const item of revenue) {
+    const amount = Number(item.amount);
+    const serviceName =
+      ((item.service as unknown) as { name: string } | null)?.name ?? "Unknown";
+
+    totalRevenue += amount;
+    if (item.status === "paid") {
+      paidRevenue += amount;
+      paidCount++;
+    } else {
+      pendingRevenue += amount;
+      pendingCount++;
+    }
+
+    if (!serviceMap[serviceName]) {
+      serviceMap[serviceName] = {
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        count: 0,
+      };
+    }
+    serviceMap[serviceName].totalAmount += amount;
+    serviceMap[serviceName].count += 1;
+    if (item.status === "paid") {
+      serviceMap[serviceName].paidAmount += amount;
+    } else {
+      serviceMap[serviceName].pendingAmount += amount;
+    }
+  }
+
+  const serviceBreakdown = Object.entries(serviceMap)
+    .map(([serviceName, stats]) => ({ serviceName, ...stats }))
+    .sort((a, b) => b.totalAmount - a.totalAmount);
+
+  return {
+    totalRevenue,
+    paidRevenue,
+    pendingRevenue,
+    paidCount,
+    pendingCount,
+    totalClients,
+    totalServices,
+    serviceBreakdown,
+  };
+}
