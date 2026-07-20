@@ -4,6 +4,7 @@ import { Users, DollarSign, LayoutDashboard, LogOut } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserRole } from "@/app/actions/wexlogic-actions";
+import { MobileNav } from "./components/MobileNav";
 
 export default async function DashboardLayout({
   children,
@@ -22,9 +23,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-slate-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 relative flex flex-col">
+    <div className="flex h-screen bg-zinc-950 text-slate-100 flex-col md:flex-row">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 bg-zinc-900 border-r border-zinc-800 relative flex-col shrink-0">
         <div className="flex h-16 shrink-0 items-center justify-center border-b border-zinc-800 px-4">
           <Image src="/logo-horizontal.png" alt="Wexlogic Logo" width={160} height={56} className="object-contain" priority />
         </div>
@@ -71,12 +72,18 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile Navigation */}
+        <MobileNav email={user?.email} role={role} />
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 md:p-8">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
