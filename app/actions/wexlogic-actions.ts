@@ -48,7 +48,7 @@ export async function fetchClients() {
     .from("clients")
     .select(`
       *,
-      creator:user_roles!created_by(full_name)
+      creator:user_roles(full_name)
     `)
     .order("created_at", { ascending: false });
 
@@ -68,7 +68,7 @@ export async function fetchRevenue() {
       *,
       client:clients(name, company_name),
       service:services(name),
-      creator:user_roles!created_by(full_name)
+      creator:user_roles(full_name)
     `)
     .order("created_at", { ascending: false });
 
@@ -191,7 +191,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   const [revenueRes, clientsRes, servicesRes] = await Promise.all([
     supabase
       .from("revenue")
-      .select("amount, status, created_by, service:services(name), client:clients(name, company_name), creator:user_roles!created_by(full_name)"),
+      .select("amount, status, created_by, service:services(name), client:clients(name, company_name), creator:user_roles(full_name)"),
     supabase.from("clients").select("id", { count: "exact", head: true }),
     supabase.from("services").select("id", { count: "exact", head: true }),
   ]);
