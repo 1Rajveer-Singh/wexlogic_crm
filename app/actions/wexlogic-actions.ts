@@ -36,10 +36,10 @@ export async function fetchServices() {
 
   if (error) {
     console.error("Error fetching services:", error);
-    throw new Error("Failed to fetch services");
+    return [];
   }
 
-  return data;
+  return data || [];
 }
 
 export async function fetchClients() {
@@ -54,10 +54,10 @@ export async function fetchClients() {
 
   if (error) {
     console.error("Error fetching clients:", error);
-    throw new Error("Failed to fetch clients");
+    return [];
   }
 
-  return data;
+  return data || [];
 }
 
 export async function fetchRevenue() {
@@ -74,10 +74,10 @@ export async function fetchRevenue() {
 
   if (error) {
     console.error("Error fetching revenue:", error);
-    throw new Error("Failed to fetch revenue");
+    return [];
   }
 
-  return data;
+  return data || [];
 }
 
 export async function insertClient(prevState: any, formData: FormData) {
