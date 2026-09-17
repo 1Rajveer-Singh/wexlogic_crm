@@ -9,18 +9,11 @@ const isAdminRoute = createRouteMatcher([
 ]);
 
 export const proxy = clerkMiddleware(async (auth, request) => {
-  const session = await auth();
-
-  // If user is already authenticated and visits /login or /sign-up, route straight to dashboard
-  if (session.userId && (request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/sign-up"))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
   if (isPublicRoute(request)) {
     return;
   }
+
+  const session = await auth();
 
   // Ensure authenticated session
   if (!session.userId) {
