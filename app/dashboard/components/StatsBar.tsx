@@ -35,20 +35,20 @@ export function StatsBar({
   }, []);
 
   return (
-    <div ref={ref} className="space-y-5">
+    <div ref={ref} className="space-y-6">
       {/* Stacked progress bar */}
       <div>
-        <div className="flex justify-between text-xs text-zinc-500 mb-2">
-          <span>Paid vs Pending</span>
+        <div className="flex justify-between text-xs font-bold text-slate-600 mb-2">
+          <span>Paid vs Pending Ratio</span>
           <span>{formatINR(total)} total</span>
         </div>
-        <div className="h-3 w-full rounded-full bg-zinc-800 overflow-hidden flex">
+        <div className="h-4 w-full rounded-full border-2 border-[#1E293B] bg-slate-100 overflow-hidden flex shadow-pop-sm">
           <div
-            className="h-full bg-emerald-500 rounded-l-full transition-all duration-700 ease-out"
+            className="h-full bg-[#34D399] border-r-2 border-[#1E293B] transition-all duration-700 ease-out"
             style={{ width: animated ? `${paidPct}%` : "0%" }}
           />
           <div
-            className="h-full bg-amber-500 rounded-r-full transition-all duration-700 ease-out delay-100"
+            className="h-full bg-[#FBBF24] transition-all duration-700 ease-out delay-100"
             style={{ width: animated ? `${pendingPct}%` : "0%" }}
           />
         </div>
@@ -57,39 +57,39 @@ export function StatsBar({
       {/* Two stat boxes */}
       <div className="grid grid-cols-2 gap-4">
         {/* Paid */}
-        <div className="rounded-lg border border-emerald-800/60 bg-emerald-900/10 p-4">
+        <div className="rounded-2xl border-2 border-[#1E293B] bg-emerald-50/60 p-4 shadow-pop-sm">
           <div className="flex items-center gap-2 mb-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">
-              Paid
+            <span className="h-3 w-3 rounded-full bg-[#34D399] border border-[#1E293B]" />
+            <span className="text-xs font-black text-emerald-900 uppercase tracking-wider">
+              Paid Invoices
             </span>
           </div>
-          <p className="text-2xl font-bold text-slate-100">
+          <p className="text-2xl font-black text-[#1E293B]">
             {paidPct.toFixed(1)}%
           </p>
-          <p className="text-sm text-emerald-400 font-medium mt-0.5">
+          <p className="text-sm font-bold text-emerald-800 mt-0.5">
             {formatINR(paidAmount)}
           </p>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs font-semibold text-slate-500 mt-1">
             {paidCount} invoice{paidCount !== 1 ? "s" : ""}
           </p>
         </div>
 
         {/* Pending */}
-        <div className="rounded-lg border border-amber-800/60 bg-amber-900/10 p-4">
+        <div className="rounded-2xl border-2 border-[#1E293B] bg-amber-50/60 p-4 shadow-pop-sm">
           <div className="flex items-center gap-2 mb-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-            <span className="text-xs font-medium text-amber-400 uppercase tracking-wider">
-              Unpaid
+            <span className="h-3 w-3 rounded-full bg-[#FBBF24] border border-[#1E293B]" />
+            <span className="text-xs font-black text-amber-900 uppercase tracking-wider">
+              Pending Invoices
             </span>
           </div>
-          <p className="text-2xl font-bold text-slate-100">
+          <p className="text-2xl font-black text-[#1E293B]">
             {pendingPct.toFixed(1)}%
           </p>
-          <p className="text-sm text-amber-400 font-medium mt-0.5">
+          <p className="text-sm font-bold text-amber-800 mt-0.5">
             {formatINR(pendingAmount)}
           </p>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs font-semibold text-slate-500 mt-1">
             {pendingCount} invoice{pendingCount !== 1 ? "s" : ""}
           </p>
         </div>

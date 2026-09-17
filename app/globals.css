@@ -1,19 +1,288 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --font-heading: var(--font-outfit), system-ui, sans-serif;
+  --font-sans: var(--font-plus-jakarta-sans), system-ui, sans-serif;
+  --font-body: var(--font-plus-jakarta-sans), system-ui, sans-serif;
+
+  --color-canvas: #FFFDF5;
+  --color-ink: #1E293B;
+  --color-pop-purple: #8B5CF6;
+  --color-pop-pink: #F472B6;
+  --color-pop-yellow: #FBBF24;
+  --color-pop-mint: #34D399;
+  --color-pop-blue: #38BDF8;
 }
 
 @layer base {
   :root {
-    --background: #09090b; /* zinc-950 */
-    --foreground: #f8fafc; /* slate-50 */
+    --background: #FFFDF5;
+    --foreground: #1E293B;
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
+    background-color: #FFFDF5;
+    color: #1E293B;
+    font-family: var(--font-plus-jakarta-sans), system-ui, sans-serif;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-outfit), system-ui, sans-serif;
+  }
+}
+
+/* Playful Geometric Hard "Pop" Shadows */
+.shadow-pop {
+  box-shadow: 4px 4px 0px 0px #1E293B;
+}
+
+.shadow-pop-sm {
+  box-shadow: 2px 2px 0px 0px #1E293B;
+}
+
+.shadow-pop-lg {
+  box-shadow: 6px 6px 0px 0px #1E293B;
+}
+
+.shadow-pop-xl {
+  box-shadow: 8px 8px 0px 0px #1E293B;
+}
+
+.shadow-pop-purple {
+  box-shadow: 4px 4px 0px 0px #8B5CF6;
+}
+
+.shadow-pop-pink {
+  box-shadow: 4px 4px 0px 0px #F472B6;
+}
+
+.shadow-pop-yellow {
+  box-shadow: 4px 4px 0px 0px #FBBF24;
+}
+
+.shadow-pop-mint {
+  box-shadow: 4px 4px 0px 0px #34D399;
+}
+
+/* Tactile Pop Buttons & Cards */
+.btn-pop {
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 4px 4px 0px 0px #1E293B;
+}
+
+.btn-pop:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #1E293B;
+}
+
+.btn-pop:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #1E293B;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%);
+  color: #1E293B;
+  border: 2px solid #1E293B;
+  font-weight: 800;
+  box-shadow: 3px 3px 0px 0px #1E293B;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-gold:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px 0px #1E293B;
+  filter: brightness(1.05);
+}
+
+.btn-gold:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #1E293B;
+}
+
+.btn-primary {
+  background-color: #8B5CF6;
+  color: #FFFFFF;
+  border: 2px solid #1E293B;
+  font-weight: 800;
+  box-shadow: 3px 3px 0px 0px #1E293B;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-primary:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px 0px #1E293B;
+  background-color: #7C3AED;
+}
+
+.btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #1E293B;
+}
+
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: #1E293B;
+  border: 2px solid #1E293B;
+  font-weight: 700;
+  box-shadow: 3px 3px 0px 0px #1E293B;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-secondary:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px 0px #1E293B;
+  background-color: #F8FAFC;
+}
+
+.btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #1E293B;
+}
+
+.btn-dark {
+  background-color: #1E293B;
+  color: #FFFFFF;
+  border: 2px solid #1E293B;
+  font-weight: 800;
+  box-shadow: 3px 3px 0px 0px #1E293B;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-dark:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px 0px #1E293B;
+  background-color: #0F172A;
+}
+
+.btn-dark:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #1E293B;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 60%, #92400E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.card-pop {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 4px 4px 0px 0px #1E293B;
+}
+
+.card-pop:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #1E293B;
+}
+
+/* Subtle dot-grid pattern fill */
+.bg-dot-grid {
+  background-image: radial-gradient(#CBD5E1 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+}
+
+/* Clerk Component Customization for Playful Geometric */
+.cl-card {
+  background-color: #FFFFFF !important;
+  border: 2px solid #1E293B !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 6px 6px 0px 0px #1E293B !important;
+}
+
+.cl-headerTitle {
+  font-family: var(--font-outfit), sans-serif !important;
+  color: #1E293B !important;
+  font-weight: 800 !important;
+}
+
+.cl-headerSubtitle {
+  color: #64748B !important;
+}
+
+.cl-socialButtonsBlockButton {
+  background-color: #FFFFFF !important;
+  border: 2px solid #1E293B !important;
+  box-shadow: 3px 3px 0px 0px #1E293B !important;
+  color: #1E293B !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background-color: #FFFDF5 !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px 0px #1E293B !important;
+}
+
+.cl-socialButtonsBlockButton:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 2px 2px 0px 0px #1E293B !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  color: #1E293B !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+}
+
+.cl-socialButtonsProviderIcon {
+  width: 20px !important;
+  height: 20px !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.cl-formButtonPrimary {
+  background-color: #8B5CF6 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  border: 2px solid #1E293B !important;
+  border-radius: 9999px !important;
+  box-shadow: 4px 4px 0px 0px #1E293B !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.cl-formButtonPrimary:hover {
+  background-color: #7C3AED !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 6px 6px 0px 0px #1E293B !important;
+}
+
+.cl-formButtonPrimary:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0px 0px #1E293B !important;
+}
+
+.cl-formFieldInput {
+  background-color: #FFFFFF !important;
+  border: 2px solid #CBD5E1 !important;
+  border-radius: 0.75rem !important;
+  color: #1E293B !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: #8B5CF6 !important;
+  box-shadow: 3px 3px 0px 0px #8B5CF6 !important;
+}
+
+.cl-formFieldLabel {
+  color: #1E293B !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.cl-dividerLine {
+  background-color: #E2E8F0 !important;
+}
+
+.cl-dividerText {
+  color: #64748B !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
 }

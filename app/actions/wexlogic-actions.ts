@@ -2,29 +2,14 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { currentUser } from "@clerk/nextjs/server";
+import { getCurrentUserRole, hasRole, type CrmRole, getUserDisplayName } from "@/utils/auth";
+import { logAuditAction } from "@/lib/crm-db";
 
-export type UserRole = "admin" | "manager" | "viewer" | null;
+export type UserRole = CrmRole | null;
 
 export async function getUserRole(): Promise<UserRole> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (error) {
-    if (error.code !== 'PGRST116') {
-      console.error("Error fetching user role:", error);
-    }
-    return null;
-  }
-
-  return data?.role as UserRole;
+  return await getCurrentUserRole();
 }
 
 export async function fetchServices() {
@@ -61,28 +46,53 @@ export async function fetchClients() {
 }
 
 export async function fetchRevenue() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("revenue")
-    .select(`
-      *,
-      client:clients(name, company_name),
-      service:services(name),
-      creator:user_roles(full_name)
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching revenue:", error);
+  // Employee role cannot access revenue
+  const canAccess = await hasRole(["admin", "manager", "sales"]);
+  if (!canAccess) {
     return [];
   }
 
-  return data || [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("client_payments")
+    .select(`
+      id,
+      amount,
+      status,
+      payment_date,
+      payment_method,
+      reference_number,
+      created_at,
+      client:clients(name, company_name),
+      project:projects(name)
+    `)
+    .order("payment_date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching revenue from client_payments:", error);
+    return [];
+  }
+
+  return (data || []).map((p: any) => ({
+    id: p.id,
+    amount: p.amount,
+    status: p.status === "completed" ? "paid" : p.status,
+    created_at: p.payment_date || p.created_at,
+    client: p.client,
+    service: { name: p.project?.name || "Project Revenue" },
+    creator: { full_name: "Admin" },
+  }));
 }
 
-export async function insertClient(prevState: any, formData: FormData) {
-  const supabase = await createClient();
-  
+export async function insertClient(prevState: unknown, formData: FormData) {
+  const user = await currentUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const canAdd = await hasRole(["admin", "manager", "sales"]);
+  if (!canAdd) {
+    return { error: "Forbidden: You do not have permission to add clients" };
+  }
+
   const name = formData.get("name") as string;
   const company_name = formData.get("company_name") as string;
   const email = formData.get("email") as string;
@@ -91,47 +101,85 @@ export async function insertClient(prevState: any, formData: FormData) {
     return { error: "Missing required fields" };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
+  const supabase = await createClient();
   const { error } = await supabase
     .from("clients")
-    .insert([{ name, company_name, email, created_by: user.id }]);
+    .insert([{ name, company_name, email }]);
 
   if (error) {
     console.error("Error inserting client:", error);
     return { error: error.message };
   }
 
+  await logAuditAction(
+    "create",
+    "client",
+    null,
+    null,
+    { name, company_name, email },
+    {
+      id: user.id,
+      email: user.emailAddresses[0]?.emailAddress,
+      name: getUserDisplayName(user),
+    }
+  );
+
   revalidatePath("/dashboard/clients");
+  revalidatePath("/dashboard/audit-logs");
   return { success: true };
 }
 
-export async function insertRevenue(prevState: any, formData: FormData) {
-  const supabase = await createClient();
-  
-  const client_id = formData.get("client_id") as string;
-  const service_id = formData.get("service_id") as string;
-  const amount = parseFloat(formData.get("amount") as string);
-  const status = formData.get("status") as "pending" | "paid";
+export async function insertRevenue(prevState: unknown, formData: FormData) {
+  const user = await currentUser();
+  if (!user) return { error: "Not authenticated" };
 
-  if (!client_id || !service_id || isNaN(amount) || !status) {
+  const canAdd = await hasRole(["admin", "sales"]);
+  if (!canAdd) {
+    return { error: "Forbidden: You do not have permission to log revenue" };
+  }
+
+  const client_id = formData.get("client_id") as string;
+  const amount = parseFloat(formData.get("amount") as string);
+  const status = (formData.get("status") as string) || "completed";
+
+  if (!client_id || isNaN(amount)) {
     return { error: "Missing required fields" };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  const { error } = await supabase
-    .from("revenue")
-    .insert([{ client_id, service_id, amount, status, created_by: user.id }]);
+  const supabase = await createClient();
+  const { data: insertedPayment, error } = await supabase
+    .from("client_payments")
+    .insert([{
+      client_id,
+      amount,
+      status: status === "paid" ? "completed" : status,
+      payment_method: "bank_transfer",
+      recorded_by: user.id
+    }])
+    .select("id")
+    .single();
 
   if (error) {
-    console.error("Error inserting revenue:", error);
+    console.error("Error inserting revenue to client_payments:", error);
     return { error: error.message };
   }
 
+  await logAuditAction(
+    "create",
+    "client_payment",
+    insertedPayment?.id || null,
+    null,
+    { client_id, amount, status: status === "paid" ? "completed" : status },
+    {
+      id: user.id,
+      email: user.emailAddresses[0]?.emailAddress,
+      name: getUserDisplayName(user),
+    }
+  );
+
   revalidatePath("/dashboard/revenue");
+  revalidatePath("/dashboard/payments");
+  revalidatePath("/dashboard/audit-logs");
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -188,15 +236,15 @@ export type DashboardStats = {
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient();
 
-  const [revenueRes, clientsRes, servicesRes] = await Promise.all([
+  const [paymentsRes, clientsRes, servicesRes] = await Promise.all([
     supabase
-      .from("revenue")
-      .select("amount, status, created_by, service:services(name), client:clients(name, company_name), creator:user_roles(full_name)"),
+      .from("client_payments")
+      .select("amount, status, client:clients(name, company_name)"),
     supabase.from("clients").select("id", { count: "exact", head: true }),
     supabase.from("services").select("id", { count: "exact", head: true }),
   ]);
 
-  const revenue = revenueRes.data ?? [];
+  const payments = paymentsRes.data ?? [];
   const totalClients = clientsRes.count ?? 0;
   const totalServices = servicesRes.count ?? 0;
 
@@ -206,36 +254,20 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   let paidCount = 0;
   let pendingCount = 0;
 
-  const serviceMap: Record<
-    string,
-    { totalAmount: number; paidAmount: number; pendingAmount: number; count: number }
-  > = {};
-  
   const clientMap: Record<
     string,
     { companyName: string; totalAmount: number; paidAmount: number; pendingAmount: number; count: number }
   > = {};
 
-  const userMap: Record<
-    string,
-    { userName: string; totalAmount: number; paidAmount: number; pendingAmount: number }
-  > = {};
-
-  for (const item of revenue) {
-    const amount = Number(item.amount);
-    const serviceName =
-      ((item.service as unknown) as { name: string } | null)?.name ?? "Unknown";
-      
+  for (const item of payments) {
+    const amount = Number(item.amount) || 0;
     const clientData = (item.client as unknown) as { name: string; company_name: string } | null;
-    const clientName = clientData?.name ?? "Unknown";
+    const clientName = clientData?.name ?? "Client";
     const companyName = clientData?.company_name ?? "";
-    
-    const createdBy = item.created_by as string | null;
-    const creatorData = (item.creator as unknown) as { full_name: string } | null;
-    const userName = creatorData?.full_name ?? "Unknown";
+    const isPaid = item.status === "completed" || item.status === "paid";
 
     totalRevenue += amount;
-    if (item.status === "paid") {
+    if (isPaid) {
       paidRevenue += amount;
       paidCount++;
     } else {
@@ -243,44 +275,17 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
       pendingCount++;
     }
 
-    // Service aggregation
-    if (!serviceMap[serviceName]) {
-      serviceMap[serviceName] = { totalAmount: 0, paidAmount: 0, pendingAmount: 0, count: 0 };
-    }
-    serviceMap[serviceName].totalAmount += amount;
-    serviceMap[serviceName].count += 1;
-    if (item.status === "paid") serviceMap[serviceName].paidAmount += amount;
-    else serviceMap[serviceName].pendingAmount += amount;
-    
-    // Client aggregation
     if (!clientMap[clientName]) {
       clientMap[clientName] = { companyName, totalAmount: 0, paidAmount: 0, pendingAmount: 0, count: 0 };
     }
     clientMap[clientName].totalAmount += amount;
     clientMap[clientName].count += 1;
-    if (item.status === "paid") clientMap[clientName].paidAmount += amount;
+    if (isPaid) clientMap[clientName].paidAmount += amount;
     else clientMap[clientName].pendingAmount += amount;
-    
-    // User aggregation
-    const userKey = createdBy ?? "unknown";
-    if (!userMap[userKey]) {
-      userMap[userKey] = { userName, totalAmount: 0, paidAmount: 0, pendingAmount: 0 };
-    }
-    userMap[userKey].totalAmount += amount;
-    if (item.status === "paid") userMap[userKey].paidAmount += amount;
-    else userMap[userKey].pendingAmount += amount;
   }
 
-  const serviceBreakdown = Object.entries(serviceMap)
-    .map(([serviceName, stats]) => ({ serviceName, ...stats }))
-    .sort((a, b) => b.totalAmount - a.totalAmount);
-    
   const clientBreakdown = Object.entries(clientMap)
     .map(([clientName, stats]) => ({ clientName, ...stats }))
-    .sort((a, b) => b.totalAmount - a.totalAmount);
-    
-  const userBreakdown = Object.entries(userMap)
-    .map(([userId, stats]) => ({ userId: userId === "unknown" ? null : userId, ...stats }))
     .sort((a, b) => b.totalAmount - a.totalAmount);
 
   return {
@@ -291,8 +296,8 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     pendingCount,
     totalClients,
     totalServices,
-    serviceBreakdown,
+    serviceBreakdown: [],
     clientBreakdown,
-    userBreakdown,
+    userBreakdown: [],
   };
 }

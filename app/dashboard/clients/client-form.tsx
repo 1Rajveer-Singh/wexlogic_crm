@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { insertClient } from "@/app/actions/wexlogic-actions";
+import { UserPlus, X } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -10,61 +11,109 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex justify-center rounded-md border border-transparent bg-slate-100 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 focus:ring-offset-zinc-900 transition-colors"
+      className="inline-flex justify-center items-center rounded-full border-2 border-[#1E293B] bg-[#8B5CF6] px-5 py-2 text-sm font-bold text-white shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 transition-all cursor-pointer"
     >
-      {pending ? "Saving..." : "Save Client"}
+      {pending ? "Saving Client..." : "Save Client"}
     </button>
   );
 }
 
 export function ClientForm() {
   const [isOpen, setIsOpen] = useState(false);
-  const [state, formAction] = useActionState(insertClient, null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (state?.success) {
+  const formAction = async (formData: FormData) => {
+    setError(null);
+    const res = await insertClient(null, formData);
+    if (res?.error) {
+      setError(res.error);
+    } else if (res?.success) {
       setIsOpen(false);
     }
-  }, [state]);
+  };
 
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
-        className="block rounded-md bg-slate-100 px-3 py-2 text-center text-sm font-semibold text-zinc-950 shadow-sm hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 transition-colors"
+        onClick={() => {
+          setError(null);
+          setIsOpen(true);
+        }}
+        className="inline-flex items-center gap-2 rounded-full border-2 border-[#1E293B] bg-[#8B5CF6] px-4 py-2 text-sm font-bold text-white shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
       >
+        <UserPlus className="h-4 w-4" strokeWidth={2.5} />
         Add Client
       </button>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm p-4 sm:p-0">
-      <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-6 text-left align-middle shadow-2xl transition-all">
-        <h3 className="text-lg font-medium leading-6 text-slate-100">Add New Client</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left align-middle shadow-pop-lg transition-all">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E293B]/10">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-[#8B5CF6] border-2 border-[#1E293B]" />
+            <h3 className="text-xl font-black text-[#1E293B]">Add New Client</h3>
+          </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+          >
+            <X className="h-4 w-4" strokeWidth={2.5} />
+          </button>
+        </div>
+
         <form action={formAction} className="mt-4 space-y-4">
-          {state?.error && (
-            <div className="rounded-md bg-red-900/30 border border-red-800 p-3 text-sm text-red-400">
-              {state.error}
+          {error && (
+            <div className="rounded-xl bg-rose-50 border-2 border-rose-400 p-3 text-sm font-bold text-rose-700">
+              {error}
             </div>
           )}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
-            <input type="text" name="name" id="name" required className="block w-full rounded-md border-zinc-700 bg-zinc-950/50 shadow-sm focus:border-slate-300 focus:ring-slate-300 sm:text-sm border p-2 text-slate-100 placeholder-zinc-500" />
+            <label htmlFor="name" className="block text-xs font-black uppercase tracking-wider text-[#1E293B] mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              required
+              placeholder="e.g. John Smith"
+              className="block w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2.5 text-sm font-medium text-[#1E293B] placeholder-slate-400 focus:outline-none focus:shadow-pop-sm transition-all"
+            />
           </div>
           <div>
-            <label htmlFor="company_name" className="block text-sm font-medium text-slate-300 mb-1">Company Name</label>
-            <input type="text" name="company_name" id="company_name" required className="block w-full rounded-md border-zinc-700 bg-zinc-950/50 shadow-sm focus:border-slate-300 focus:ring-slate-300 sm:text-sm border p-2 text-slate-100 placeholder-zinc-500" />
+            <label htmlFor="company_name" className="block text-xs font-black uppercase tracking-wider text-[#1E293B] mb-1">
+              Company Name
+            </label>
+            <input
+              type="text"
+              name="company_name"
+              id="company_name"
+              required
+              placeholder="e.g. Acme Corp"
+              className="block w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2.5 text-sm font-medium text-[#1E293B] placeholder-slate-400 focus:outline-none focus:shadow-pop-sm transition-all"
+            />
           </div>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
-            <input type="email" name="email" id="email" required className="block w-full rounded-md border-zinc-700 bg-zinc-950/50 shadow-sm focus:border-slate-300 focus:ring-slate-300 sm:text-sm border p-2 text-slate-100 placeholder-zinc-500" />
+            <label htmlFor="email" className="block text-xs font-black uppercase tracking-wider text-[#1E293B] mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              required
+              placeholder="e.g. john@acme.com"
+              className="block w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2.5 text-sm font-medium text-[#1E293B] placeholder-slate-400 focus:outline-none focus:shadow-pop-sm transition-all"
+            />
           </div>
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 focus:ring-offset-zinc-900 transition-colors"
+              className="rounded-full border-2 border-[#1E293B] bg-slate-100 px-4 py-2 text-sm font-bold text-[#1E293B] shadow-pop-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
             >
               Cancel
             </button>
