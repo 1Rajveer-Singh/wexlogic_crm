@@ -1,6 +1,6 @@
 import { getActivities, getClients, getProjects } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateSales } from "@/utils/auth";
-import { ActivityModal } from "./activity-modal";
+import { ActivityModal, DeleteActivityButton } from "./activity-modal";
 import { Activity, Phone, Users, MessageSquare, Mail, Calendar, FileText } from "lucide-react";
 
 export default async function ActivitiesPage() {
@@ -58,9 +58,17 @@ export default async function ActivitiesPage() {
                 <div className="flex-1 min-w-0 border-b-2 border-slate-100 pb-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h4 className="font-bold text-sm text-[#1E293B]">{act.title}</h4>
-                    <span className="text-xs font-semibold text-slate-400">
-                      {new Date(act.activity_date).toLocaleString()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-400">
+                        {new Date(act.activity_date).toLocaleString()}
+                      </span>
+                      {canAdd && (
+                        <div className="flex items-center gap-1">
+                          <ActivityModal clients={clients} projects={projects} initialData={act} />
+                          <DeleteActivityButton id={act.id} title={act.title} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {act.description && (
                     <p className="mt-1 text-xs text-slate-600 font-medium leading-relaxed">

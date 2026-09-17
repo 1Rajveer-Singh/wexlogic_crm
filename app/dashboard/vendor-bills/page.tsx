@@ -1,7 +1,7 @@
 import { getVendorBills, getVendors, getProjects } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateVendors } from "@/utils/auth";
 import { formatINR } from "@/utils/finance-calc";
-import { VendorBillModal } from "./vendor-bill-modal";
+import { VendorBillModal, DeleteVendorBillButton } from "./vendor-bill-modal";
 import { FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 
@@ -86,9 +86,14 @@ export default async function VendorBillsPage() {
                 <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Due Date
                 </th>
-                <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Status
                 </th>
+                {canAdd && (
+                  <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#1E293B]/10 bg-white">
@@ -120,19 +125,27 @@ export default async function VendorBillsPage() {
                     <td className="whitespace-nowrap px-3 py-4 text-xs font-medium text-slate-500">
                       {b.due_date ? new Date(b.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                    <td className="whitespace-nowrap px-3 py-4">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black border uppercase tracking-wider shadow-pop-sm ${badge.bg} ${badge.text} ${badge.border}`}
                       >
                         {b.payment_status}
                       </span>
                     </td>
+                    {canAdd && (
+                      <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <VendorBillModal vendors={vendors} projects={projects} initialData={b} />
+                          <DeleteVendorBillButton id={b.id} billNumber={b.bill_number} />
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {bills.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-sm font-medium text-slate-400">
+                  <td colSpan={canAdd ? 8 : 7} className="py-12 text-center text-sm font-medium text-slate-400">
                     {canAdd
                       ? 'No vendor bills recorded. Click "Log Vendor Bill" to track payables.'
                       : "No vendor bills recorded."}

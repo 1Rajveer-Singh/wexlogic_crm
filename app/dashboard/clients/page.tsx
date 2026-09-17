@@ -1,6 +1,6 @@
 import { getClients } from "@/lib/crm-db";
 import { requireRole } from "@/utils/auth";
-import { ClientForm } from "./client-form";
+import { ClientForm, DeleteClientButton } from "./client-form";
 import { Users, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
@@ -98,13 +98,21 @@ export default async function ClientsPage() {
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
-                    <Link
-                      href={`/dashboard/clients/${client.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[#1E293B] bg-[#FFFDF5] px-3 py-1 text-xs font-bold text-[#1E293B] shadow-pop-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-                    >
-                      <span>360° Hub</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </Link>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link
+                        href={`/dashboard/clients/${client.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#1E293B] bg-[#FFFDF5] px-3 py-1 text-xs font-bold text-[#1E293B] shadow-pop-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                      >
+                        <span>360° Hub</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                      {canAdd && (
+                        <>
+                          <ClientForm initialData={client} />
+                          <DeleteClientButton id={client.id} name={client.name} />
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

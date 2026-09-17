@@ -1,6 +1,6 @@
 import { getCompanies, getClients } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateSales } from "@/utils/auth";
-import { CompanyModal } from "./company-modal";
+import { CompanyModal, DeleteCompanyButton } from "./company-modal";
 import { Building2, Globe, MapPin } from "lucide-react";
 import Link from "next/link";
 
@@ -52,9 +52,17 @@ export default async function CompaniesPage() {
                     <p className="text-xs font-semibold text-slate-500">{comp.industry || "General Business"}</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-950 border border-[#34D399]">
-                  {comp.status}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-950 border border-[#34D399]">
+                    {comp.status}
+                  </span>
+                  {canAdd && (
+                    <div className="flex items-center gap-1">
+                      <CompanyModal initialData={comp} />
+                      <DeleteCompanyButton id={comp.id} name={comp.name} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="mt-4 space-y-1.5 text-xs text-slate-600 font-medium">

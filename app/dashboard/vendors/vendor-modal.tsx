@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Truck, X } from "lucide-react";
-import { createVendorAction } from "@/app/actions/crm-actions";
+import { Truck, Pencil, X, Trash2 } from "lucide-react";
+import { createVendorAction, updateVendorAction, deleteVendorAction } from "@/app/actions/crm-actions";
+import type { Vendor } from "@/types/crm";
 
-export function VendorModal() {
+const INPUT = "w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B] focus:outline-none focus:shadow-pop-sm";
+
+export function VendorModal({ initialData }: { initialData?: Vendor }) {
+  const isEdit = !!initialData;
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -15,7 +19,7 @@ export function VendorModal() {
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    await createVendorAction({
+    const data = {
       name: form.get("name") as string,
       company_name: form.get("company_name") as string,
       phone: form.get("phone") as string,
@@ -24,7 +28,13 @@ export function VendorModal() {
       address: form.get("address") as string,
       gst_number: form.get("gst_number") as string,
       notes: form.get("notes") as string,
-    });
+    };
+
+    if (isEdit) {
+      await updateVendorAction(initialData!.id, data);
+    } else {
+      await createVendorAction(data);
+    }
 
     setLoading(false);
     setIsOpen(false);
@@ -32,6 +42,17 @@ export function VendorModal() {
   };
 
   if (!isOpen) {
+    if (isEdit) {
+      return (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all cursor-pointer"
+          title="Edit Vendor"
+        >
+          <Pencil className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </button>
+      );
+    }
     return (
       <button
         onClick={() => setIsOpen(true)}
@@ -45,15 +66,15 @@ export function VendorModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg">
+      <div className="w-full max-w-md transform overflow-y-auto max-h-[90vh] rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg transition-all">
         <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E293B]/10">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-[#8B5CF6] border-2 border-[#1E293B]" />
-            <h3 className="text-lg font-black text-[#1E293B]">Register Vendor / Contractor</h3>
+            <h3 className="text-lg font-black text-[#1E293B]">{isEdit ? "Edit Vendor" : "Register Vendor / Contractor"}</h3>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B]"
+            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B] cursor-pointer"
           >
             <X className="h-4 w-4" strokeWidth={2.5} />
           </button>
@@ -66,17 +87,19 @@ export function VendorModal() {
               type="text"
               name="name"
               required
+              defaultValue={initialData?.name}
               placeholder="e.g. Grand Stage Lighting"
-              className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+              className={INPUT}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Trade Category</label>
               <select
                 name="category"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.category || "Decoration"}
+                className={INPUT}
               >
                 <option value="Decoration">Decoration & Stage</option>
                 <option value="Modeling">Modeling & Talent</option>
@@ -92,20 +115,22 @@ export function VendorModal() {
               <input
                 type="tel"
                 name="phone"
+                defaultValue={initialData?.phone || ""}
                 placeholder="+91 99090 12345"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Email</label>
               <input
                 type="email"
                 name="email"
+                defaultValue={initialData?.email || ""}
                 placeholder="contact@vendor.com"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
             <div>
@@ -113,8 +138,9 @@ export function VendorModal() {
               <input
                 type="text"
                 name="gst_number"
+                defaultValue={initialData?.gst_number || ""}
                 placeholder="24AAACA1111A1Z0"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
           </div>
@@ -132,11 +158,34 @@ export function VendorModal() {
               disabled={loading}
               className="rounded-xl border-2 border-[#1E293B] btn-primary px-5 py-2 text-xs font-black shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 transition-all cursor-pointer"
             >
-              {loading ? "Registering..." : "Save Vendor"}
+              {loading ? "Saving..." : isEdit ? "Update Vendor" : "Save Vendor"}
             </button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export function DeleteVendorButton({ id, name }: { id: string; name: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete vendor "${name}"? This cannot be undone.`)) return;
+    setLoading(true);
+    await deleteVendorAction(id);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer"
+      title="Delete Vendor"
+    >
+      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+    </button>
   );
 }

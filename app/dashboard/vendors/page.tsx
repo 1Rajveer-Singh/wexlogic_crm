@@ -1,7 +1,7 @@
 import { getVendors } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateVendors } from "@/utils/auth";
 import { formatINR } from "@/utils/finance-calc";
-import { VendorModal } from "./vendor-modal";
+import { VendorModal, DeleteVendorButton } from "./vendor-modal";
 import { Truck } from "lucide-react";
 
 export default async function VendorsPage() {
@@ -52,9 +52,14 @@ export default async function VendorsPage() {
                 <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Pending Balance
                 </th>
-                <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Status
                 </th>
+                {canAdd && (
+                  <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#1E293B]/10 bg-white">
@@ -82,16 +87,24 @@ export default async function VendorsPage() {
                   <td className="whitespace-nowrap px-3 py-4 text-xs font-bold text-rose-700">
                     {formatINR(v.total_pending || 0)}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                  <td className="whitespace-nowrap px-3 py-4">
                     <span className="rounded-full bg-emerald-100 border border-[#34D399] px-2.5 py-0.5 text-[10px] font-black uppercase text-emerald-950">
                       {v.status}
                     </span>
                   </td>
+                  {canAdd && (
+                    <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <VendorModal initialData={v} />
+                        <DeleteVendorButton id={v.id} name={v.name} />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {vendors.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-sm font-medium text-slate-400">
+                  <td colSpan={canAdd ? 8 : 7} className="py-12 text-center text-sm font-medium text-slate-400">
                     {canAdd ? 'No vendors registered. Click "Add Vendor" to record one.' : "No vendors registered."}
                   </td>
                 </tr>

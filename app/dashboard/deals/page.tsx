@@ -72,7 +72,7 @@ export default async function DealsPage() {
             </span>
           )}
         </div>
-        <DealsKanban deals={deals} readOnly={!canMutate} />
+        <DealsKanban deals={deals} clients={clients} services={services} readOnly={!canMutate} />
       </div>
     </div>
   );

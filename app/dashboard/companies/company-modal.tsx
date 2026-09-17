@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, X } from "lucide-react";
-import { createCompanyAction } from "@/app/actions/crm-actions";
+import { Building2, Pencil, X, Trash2 } from "lucide-react";
+import { createCompanyAction, updateCompanyAction, deleteCompanyAction } from "@/app/actions/crm-actions";
+import type { Company } from "@/types/crm";
 
-export function CompanyModal() {
+const INPUT = "w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B] focus:outline-none focus:shadow-pop-sm";
+
+export function CompanyModal({ initialData }: { initialData?: Company }) {
+  const isEdit = !!initialData;
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -15,7 +19,7 @@ export function CompanyModal() {
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    await createCompanyAction({
+    const data = {
       name: form.get("name") as string,
       website: form.get("website") as string,
       industry: form.get("industry") as string,
@@ -24,9 +28,15 @@ export function CompanyModal() {
       city: form.get("city") as string,
       state: form.get("state") as string,
       gst_number: form.get("gst_number") as string,
-      status: "active",
+      status: (form.get("status") as any) || initialData?.status || "active",
       notes: form.get("notes") as string,
-    });
+    };
+
+    if (isEdit) {
+      await updateCompanyAction(initialData!.id, data);
+    } else {
+      await createCompanyAction(data);
+    }
 
     setLoading(false);
     setIsOpen(false);
@@ -34,6 +44,17 @@ export function CompanyModal() {
   };
 
   if (!isOpen) {
+    if (isEdit) {
+      return (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all cursor-pointer"
+          title="Edit Company"
+        >
+          <Pencil className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </button>
+      );
+    }
     return (
       <button
         onClick={() => setIsOpen(true)}
@@ -47,30 +68,31 @@ export function CompanyModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg transition-all">
+      <div className="w-full max-w-lg transform overflow-y-auto max-h-[90vh] rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg transition-all">
         <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E293B]/10">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-[#8B5CF6] border-2 border-[#1E293B]" />
-            <h3 className="text-lg font-black text-[#1E293B]">Add B2B Company</h3>
+            <h3 className="text-lg font-black text-[#1E293B]">{isEdit ? "Edit Company" : "Add B2B Company"}</h3>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B]"
+            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B] cursor-pointer"
           >
             <X className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Company Name *</label>
               <input
                 type="text"
                 name="name"
                 required
+                defaultValue={initialData?.name}
                 placeholder="e.g. Reliance Retail"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
             <div>
@@ -78,20 +100,22 @@ export function CompanyModal() {
               <input
                 type="text"
                 name="industry"
+                defaultValue={initialData?.industry || ""}
                 placeholder="e.g. Retail / E-commerce"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Website</label>
               <input
                 type="url"
                 name="website"
+                defaultValue={initialData?.website || ""}
                 placeholder="https://example.com"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
             <div>
@@ -99,20 +123,22 @@ export function CompanyModal() {
               <input
                 type="text"
                 name="gst_number"
+                defaultValue={initialData?.gst_number || ""}
                 placeholder="24AAACA0000A1Z5"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">City</label>
               <input
                 type="text"
                 name="city"
+                defaultValue={initialData?.city || ""}
                 placeholder="Ahmedabad"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
             <div>
@@ -120,8 +146,32 @@ export function CompanyModal() {
               <input
                 type="text"
                 name="state"
+                defaultValue={initialData?.state || ""}
                 placeholder="Gujarat"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Phone</label>
+              <input
+                type="tel"
+                name="phone"
+                defaultValue={initialData?.phone || ""}
+                placeholder="+91 98765 43210"
+                className={INPUT}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                defaultValue={initialData?.email || ""}
+                placeholder="contact@company.com"
+                className={INPUT}
               />
             </div>
           </div>
@@ -139,11 +189,34 @@ export function CompanyModal() {
               disabled={loading}
               className="rounded-xl border-2 border-[#1E293B] btn-primary px-5 py-2 text-xs font-black shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 transition-all cursor-pointer"
             >
-              {loading ? "Saving..." : "Save Company"}
+              {loading ? "Saving..." : isEdit ? "Update Company" : "Save Company"}
             </button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export function DeleteCompanyButton({ id, name }: { id: string; name: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete company "${name}"? This cannot be undone.`)) return;
+    setLoading(true);
+    await deleteCompanyAction(id);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer"
+      title="Delete Company"
+    >
+      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+    </button>
   );
 }

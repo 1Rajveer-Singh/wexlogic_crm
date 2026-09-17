@@ -205,6 +205,31 @@ export async function createCompany(data: Omit<Company, "id" | "created_at" | "u
   return newComp;
 }
 
+export async function updateCompany(id: string, data: Partial<Company>): Promise<Company | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("companies").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Company;
+  } catch (err) { console.warn("Supabase updateCompany failed:", err); }
+  const store = await getStore();
+  const item = store.companies.find((c) => c.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "company", id, prev, item);
+  return item;
+}
+
+export async function deleteCompany(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("companies").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteCompany failed:", err); }
+  const store = await getStore();
+  const idx = store.companies.findIndex((c) => c.id === id);
+  if (idx !== -1) { const removed = store.companies.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "company", id, removed, null); }
+  return true;
+}
+
 // --- CLIENTS ---
 export async function getClients(): Promise<Client[]> {
   try {
@@ -302,6 +327,31 @@ export async function createClient(data: Partial<Client>): Promise<Client> {
   await saveStore(store);
   await logAuditAction("create", "client", newClient.id, null, newClient);
   return newClient;
+}
+
+export async function updateClient(id: string, data: Partial<Client>): Promise<Client | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("clients").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Client;
+  } catch (err) { console.warn("Supabase updateClient failed:", err); }
+  const store = await getStore();
+  const item = store.clients.find((c) => c.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "client", id, prev, item);
+  return item;
+}
+
+export async function deleteClient(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("clients").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteClient failed:", err); }
+  const store = await getStore();
+  const idx = store.clients.findIndex((c) => c.id === id);
+  if (idx !== -1) { const removed = store.clients.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "client", id, removed, null); }
+  return true;
 }
 
 // --- LEADS & CONVERSION ---
@@ -590,6 +640,31 @@ export async function updateDealStage(id: string, stage: Deal["stage"]): Promise
   return deal;
 }
 
+export async function updateDeal(id: string, data: Partial<Deal>): Promise<Deal | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("deals").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Deal;
+  } catch (err) { console.warn("Supabase updateDeal failed:", err); }
+  const store = await getStore();
+  const item = store.deals.find((d) => d.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "deal", id, prev, item);
+  return item;
+}
+
+export async function deleteDeal(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("deals").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteDeal failed:", err); }
+  const store = await getStore();
+  const idx = store.deals.findIndex((d) => d.id === id);
+  if (idx !== -1) { const removed = store.deals.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "deal", id, removed, null); }
+  return true;
+}
+
 // --- SERVICES ---
 export async function getServices(): Promise<Service[]> {
   try {
@@ -709,6 +784,31 @@ export async function createProject(data: Partial<Project>): Promise<Project> {
   await saveStore(store);
   await logAuditAction("create", "project", newProj.id, null, newProj);
   return newProj;
+}
+
+export async function updateProject(id: string, data: Partial<Project>): Promise<Project | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("projects").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Project;
+  } catch (err) { console.warn("Supabase updateProject failed:", err); }
+  const store = await getStore();
+  const item = store.projects.find((p) => p.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "project", id, prev, item);
+  return item;
+}
+
+export async function deleteProject(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("projects").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteProject failed:", err); }
+  const store = await getStore();
+  const idx = store.projects.findIndex((p) => p.id === id);
+  if (idx !== -1) { const removed = store.projects.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "project", id, removed, null); }
+  return true;
 }
 
 export async function getProjectCategories(projectId: string): Promise<ProjectCategory[]> {
@@ -874,7 +974,32 @@ export async function createExpense(data: Partial<Expense>): Promise<Expense> {
   return newExpense;
 }
 
-// --- VENDORS & BILLS ---
+export async function updateExpense(id: string, data: Partial<Expense>): Promise<Expense | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("expenses").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Expense;
+  } catch (err) { console.warn("Supabase updateExpense failed:", err); }
+  const store = await getStore();
+  const item = store.expenses.find((e) => e.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "expense", id, prev, item);
+  return item;
+}
+
+export async function deleteExpense(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("expenses").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteExpense failed:", err); }
+  const store = await getStore();
+  const idx = store.expenses.findIndex((e) => e.id === id);
+  if (idx !== -1) { const removed = store.expenses.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "expense", id, removed, null); }
+  return true;
+}
+
+
 export async function getVendors(): Promise<Vendor[]> {
   let vendors: Vendor[] = [];
   try {
@@ -940,6 +1065,31 @@ export async function createVendor(data: Partial<Vendor>): Promise<Vendor> {
   await saveStore(store);
   await logAuditAction("create", "vendor", newVendor.id, null, newVendor);
   return newVendor;
+}
+
+export async function updateVendor(id: string, data: Partial<Vendor>): Promise<Vendor | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("vendors").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Vendor;
+  } catch (err) { console.warn("Supabase updateVendor failed:", err); }
+  const store = await getStore();
+  const item = store.vendors.find((v) => v.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "vendor", id, prev, item);
+  return item;
+}
+
+export async function deleteVendor(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("vendors").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteVendor failed:", err); }
+  const store = await getStore();
+  const idx = store.vendors.findIndex((v) => v.id === id);
+  if (idx !== -1) { const removed = store.vendors.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "vendor", id, removed, null); }
+  return true;
 }
 
 export async function getVendorBills(vendorId?: string, projectId?: string): Promise<VendorBill[]> {
@@ -1022,7 +1172,35 @@ export async function createVendorBill(data: Partial<VendorBill>): Promise<Vendo
   return newBill;
 }
 
-// --- INVOICES & PAYMENTS ---
+export async function updateVendorBill(id: string, data: Partial<VendorBill>): Promise<VendorBill | null> {
+  const now = new Date().toISOString();
+  const amount = data.amount !== undefined ? Number(data.amount) : undefined;
+  const tax = data.tax !== undefined ? Number(data.tax) : undefined;
+  const updateData = { ...data, ...(amount !== undefined && tax !== undefined ? { total_amount: amount + tax } : {}), updated_at: now };
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("vendor_bills").update(updateData).eq("id", id).select().single();
+    if (updated) return updated as VendorBill;
+  } catch (err) { console.warn("Supabase updateVendorBill failed:", err); }
+  const store = await getStore();
+  const item = store.vendor_bills.find((b) => b.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, updateData);
+  await saveStore(store);
+  await logAuditAction("update", "vendor_bill", id, prev, item);
+  return item;
+}
+
+export async function deleteVendorBill(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("vendor_bills").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteVendorBill failed:", err); }
+  const store = await getStore();
+  const idx = store.vendor_bills.findIndex((b) => b.id === id);
+  if (idx !== -1) { const removed = store.vendor_bills.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "vendor_bill", id, removed, null); }
+  return true;
+}
+
+
 export async function getInvoices(clientId?: string, projectId?: string): Promise<Invoice[]> {
   try {
     const supabase = getSupabase();
@@ -1289,6 +1467,31 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
   return newTask;
 }
 
+export async function updateTask(id: string, data: Partial<Task>): Promise<Task | null> {
+  const now = new Date().toISOString();
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("tasks").update({ ...data, updated_at: now }).eq("id", id).select().single();
+    if (updated) return updated as Task;
+  } catch (err) { console.warn("Supabase updateTask failed:", err); }
+  const store = await getStore();
+  const item = store.tasks.find((t) => t.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data, { updated_at: now });
+  await saveStore(store);
+  await logAuditAction("update", "task", id, prev, item);
+  return item;
+}
+
+export async function deleteTask(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("tasks").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteTask failed:", err); }
+  const store = await getStore();
+  const idx = store.tasks.findIndex((t) => t.id === id);
+  if (idx !== -1) { const removed = store.tasks.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "task", id, removed, null); }
+  return true;
+}
+
 export async function updateTaskStatus(id: string, status: Task["status"]): Promise<Task | null> {
   const now = new Date().toISOString();
   try {
@@ -1375,7 +1578,31 @@ export async function createActivity(data: Partial<Activity>): Promise<Activity>
   return newAct;
 }
 
-// --- AUDIT LOGS & NOTIFICATIONS ---
+export async function updateActivity(id: string, data: Partial<Activity>): Promise<Activity | null> {
+  try {
+    const supabase = getSupabase();
+    const { data: updated } = await supabase.from("activities").update(data).eq("id", id).select().single();
+    if (updated) return updated as Activity;
+  } catch (err) { console.warn("Supabase updateActivity failed:", err); }
+  const store = await getStore();
+  const item = store.activities.find((a) => a.id === id);
+  if (!item) return null;
+  const prev = { ...item };
+  Object.assign(item, data);
+  await saveStore(store);
+  await logAuditAction("update", "activity", id, prev, item);
+  return item;
+}
+
+export async function deleteActivity(id: string): Promise<boolean> {
+  try { const supabase = getSupabase(); await supabase.from("activities").delete().eq("id", id); } catch (err) { console.warn("Supabase deleteActivity failed:", err); }
+  const store = await getStore();
+  const idx = store.activities.findIndex((a) => a.id === id);
+  if (idx !== -1) { const removed = store.activities.splice(idx, 1)[0]; await saveStore(store); await logAuditAction("delete", "activity", id, removed, null); }
+  return true;
+}
+
+
 export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
   try {
     const supabase = getSupabase();

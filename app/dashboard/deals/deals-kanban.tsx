@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatINR } from "@/utils/finance-calc";
 import { updateDealStageAction } from "@/app/actions/crm-actions";
-import type { Deal, DealStage } from "@/types/crm";
+import { DealModal, DeleteDealButton } from "./deal-modal";
+import type { Deal, DealStage, Client, Service } from "@/types/crm";
 
 const STAGES: { id: DealStage; label: string; bg: string; border: string }[] = [
   { id: "new", label: "New", bg: "bg-blue-50", border: "border-blue-300" },
@@ -17,9 +18,13 @@ const STAGES: { id: DealStage; label: string; bg: string; border: string }[] = [
 
 export function DealsKanban({
   deals: initialDeals,
+  clients = [],
+  services = [],
   readOnly = false,
 }: {
   deals: Deal[];
+  clients?: Client[];
+  services?: Service[];
   readOnly?: boolean;
 }) {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
@@ -63,7 +68,15 @@ export function DealsKanban({
                   key={deal.id}
                   className="rounded-xl border-2 border-[#1E293B] bg-white p-3 shadow-pop-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all text-left"
                 >
-                  <h4 className="font-bold text-xs text-[#1E293B] truncate">{deal.deal_name}</h4>
+                  <div className="flex items-start justify-between gap-1">
+                    <h4 className="font-bold text-xs text-[#1E293B] truncate flex-1">{deal.deal_name}</h4>
+                    {!readOnly && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <DealModal clients={clients} services={services} initialData={deal} />
+                        <DeleteDealButton id={deal.id} name={deal.deal_name} />
+                      </div>
+                    )}
+                  </div>
                   <p className="text-[11px] font-semibold text-slate-500 truncate mt-0.5">
                     {deal.client?.name || "Client"}
                   </p>

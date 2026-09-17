@@ -6,17 +6,35 @@ import {
   deleteLead,
   convertLeadToClient,
   createCompany,
+  updateCompany,
+  deleteCompany,
+  updateClient,
+  deleteClient,
   createDeal,
+  updateDeal,
+  deleteDeal,
   updateDealStage,
   createProject,
+  updateProject,
+  deleteProject,
   createProjectCategory,
   createExpense,
+  updateExpense,
+  deleteExpense,
   createVendorBill,
+  updateVendorBill,
+  deleteVendorBill,
   createInvoice,
   createClientPayment,
   createTask,
+  updateTask,
+  deleteTask,
   createVendor,
+  updateVendor,
+  deleteVendor,
   createActivity,
+  updateActivity,
+  deleteActivity,
 } from "@/lib/crm-db";
 import { revalidatePath } from "next/cache";
 
@@ -129,9 +147,152 @@ export async function createVendorAction(data: any) {
   return result;
 }
 
+export async function updateVendorAction(id: string, data: any) {
+  const result = await updateVendor(id, data);
+  revalidatePath("/dashboard/vendors");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteVendorAction(id: string) {
+  await deleteVendor(id);
+  revalidatePath("/dashboard/vendors");
+  revalidatePath("/dashboard/audit-logs");
+}
+
 export async function createActivityAction(data: any) {
   const result = await createActivity(data);
   revalidatePath("/dashboard/activities");
   revalidatePath("/dashboard/calendar");
   return result;
 }
+
+export async function updateActivityAction(id: string, data: any) {
+  const result = await updateActivity(id, data);
+  revalidatePath("/dashboard/activities");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteActivityAction(id: string) {
+  await deleteActivity(id);
+  revalidatePath("/dashboard/activities");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+// --- Update/Delete actions ---
+
+export async function updateLeadAction(id: string, data: any) {
+  const result = await updateLead(id, data);
+  revalidatePath("/dashboard/leads");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteLeadAction(id: string) {
+  await deleteLead(id);
+  revalidatePath("/dashboard/leads");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateCompanyAction(id: string, data: any) {
+  const result = await updateCompany(id, data);
+  revalidatePath("/dashboard/companies");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteCompanyAction(id: string) {
+  await deleteCompany(id);
+  revalidatePath("/dashboard/companies");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateDealAction(id: string, data: any) {
+  const result = await updateDeal(id, data);
+  revalidatePath("/dashboard/deals");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteDealAction(id: string) {
+  await deleteDeal(id);
+  revalidatePath("/dashboard/deals");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateProjectAction(id: string, data: any) {
+  const result = await updateProject(id, data);
+  revalidatePath("/dashboard/projects");
+  revalidatePath(`/dashboard/projects/${id}`);
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteProjectAction(id: string) {
+  await deleteProject(id);
+  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateExpenseAction(id: string, data: any) {
+  const result = await updateExpense(id, data);
+  if (data.project_id) revalidatePath(`/dashboard/projects/${data.project_id}`);
+  revalidatePath("/dashboard/expenses");
+  revalidatePath("/dashboard/budgets");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteExpenseAction(id: string, projectId?: string) {
+  await deleteExpense(id);
+  if (projectId) revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath("/dashboard/expenses");
+  revalidatePath("/dashboard/budgets");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateVendorBillAction(id: string, data: any) {
+  const result = await updateVendorBill(id, data);
+  revalidatePath("/dashboard/vendor-bills");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteVendorBillAction(id: string) {
+  await deleteVendorBill(id);
+  revalidatePath("/dashboard/vendor-bills");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateTaskAction(id: string, data: any) {
+  const result = await updateTask(id, data);
+  if (data.project_id) revalidatePath(`/dashboard/projects/${data.project_id}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard/calendar");
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteTaskAction(id: string, projectId?: string) {
+  await deleteTask(id);
+  if (projectId) revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath("/dashboard/tasks");
+  revalidatePath("/dashboard/calendar");
+  revalidatePath("/dashboard/audit-logs");
+}
+
+export async function updateClientAction(id: string, data: any) {
+  const result = await updateClient(id, data);
+  revalidatePath("/dashboard/clients");
+  revalidatePath(`/dashboard/clients/${id}`);
+  revalidatePath("/dashboard/audit-logs");
+  return result;
+}
+
+export async function deleteClientAction(id: string) {
+  await deleteClient(id);
+  revalidatePath("/dashboard/clients");
+  revalidatePath("/dashboard/audit-logs");
+}
+

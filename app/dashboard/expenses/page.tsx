@@ -1,7 +1,7 @@
 import { getExpenses, getProjects, getVendors } from "@/lib/crm-db";
 import { getCurrentUserRole, canLogExpenses } from "@/utils/auth";
 import { formatINR } from "@/utils/finance-calc";
-import { ExpenseModal } from "./expense-modal";
+import { ExpenseModal, DeleteExpenseButton } from "./expense-modal";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
 
@@ -76,9 +76,14 @@ export default async function ExpensesPage() {
                 <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Date
                 </th>
-                <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Status
                 </th>
+                {canAdd && (
+                  <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#1E293B]/10 bg-white">
@@ -110,16 +115,24 @@ export default async function ExpensesPage() {
                   <td className="whitespace-nowrap px-3 py-4 text-xs font-medium text-slate-500">
                     {new Date(exp.expense_date).toLocaleDateString()}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                  <td className="whitespace-nowrap px-3 py-4">
                     <span className="rounded-full bg-emerald-100 border border-[#34D399] px-2.5 py-0.5 text-[10px] font-black uppercase text-emerald-950">
                       {exp.payment_status}
                     </span>
                   </td>
+                  {canAdd && (
+                    <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <ExpenseModal projects={projects} vendors={vendors} initialData={exp} />
+                        <DeleteExpenseButton id={exp.id} description={exp.description} projectId={exp.project_id} />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {expenses.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-sm font-medium text-slate-400">
+                  <td colSpan={canAdd ? 8 : 7} className="py-12 text-center text-sm font-medium text-slate-400">
                     {canAdd
                       ? 'No operational expenses recorded. Click "Add Expense" to log one.'
                       : "No operational expenses recorded."}

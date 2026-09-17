@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, X } from "lucide-react";
-import { createTaskAction } from "@/app/actions/crm-actions";
-import type { Project } from "@/types/crm";
+import { CheckSquare, Pencil, X, Trash2 } from "lucide-react";
+import { createTaskAction, updateTaskAction, deleteTaskAction } from "@/app/actions/crm-actions";
+import type { Project, Task } from "@/types/crm";
 
-export function TaskModal({ projects }: { projects: Project[] }) {
+const INPUT = "w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B] focus:outline-none focus:shadow-pop-sm";
+
+export function TaskModal({ projects, initialData }: { projects: Project[]; initialData?: Task }) {
+  const isEdit = !!initialData;
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,14 +19,20 @@ export function TaskModal({ projects }: { projects: Project[] }) {
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    await createTaskAction({
+    const data = {
       title: form.get("title") as string,
       project_id: form.get("project_id") as string,
       priority: (form.get("priority") as any) || "medium",
-      status: "todo",
+      status: (form.get("status") as any) || (isEdit ? initialData?.status : "todo"),
       due_date: (form.get("due_date") as string) || null,
       description: form.get("description") as string,
-    });
+    };
+
+    if (isEdit) {
+      await updateTaskAction(initialData!.id, data);
+    } else {
+      await createTaskAction(data);
+    }
 
     setLoading(false);
     setIsOpen(false);
@@ -31,6 +40,17 @@ export function TaskModal({ projects }: { projects: Project[] }) {
   };
 
   if (!isOpen) {
+    if (isEdit) {
+      return (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all cursor-pointer"
+          title="Edit Task"
+        >
+          <Pencil className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </button>
+      );
+    }
     return (
       <button
         onClick={() => setIsOpen(true)}
@@ -44,15 +64,15 @@ export function TaskModal({ projects }: { projects: Project[] }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg">
+      <div className="w-full max-w-md transform overflow-y-auto max-h-[90vh] rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg transition-all">
         <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E293B]/10">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-blue-500 border-2 border-[#1E293B]" />
-            <h3 className="text-lg font-black text-[#1E293B]">Create New Task</h3>
+            <h3 className="text-lg font-black text-[#1E293B]">{isEdit ? "Edit Task" : "Create New Task"}</h3>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B]"
+            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B] cursor-pointer"
           >
             <X className="h-4 w-4" strokeWidth={2.5} />
           </button>
@@ -65,8 +85,9 @@ export function TaskModal({ projects }: { projects: Project[] }) {
               type="text"
               name="title"
               required
+              defaultValue={initialData?.title}
               placeholder="e.g. Design 3 Reels for Meta Ads"
-              className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+              className={INPUT}
             />
           </div>
 
@@ -75,7 +96,8 @@ export function TaskModal({ projects }: { projects: Project[] }) {
             <select
               name="project_id"
               required
-              className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+              defaultValue={initialData?.project_id || (projects[0]?.id || "")}
+              className={INPUT}
             >
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -85,13 +107,13 @@ export function TaskModal({ projects }: { projects: Project[] }) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Priority</label>
               <select
                 name="priority"
-                defaultValue="medium"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.priority || "medium"}
+                className={INPUT}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -104,18 +126,36 @@ export function TaskModal({ projects }: { projects: Project[] }) {
               <input
                 type="date"
                 name="due_date"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.due_date || ""}
+                className={INPUT}
               />
             </div>
           </div>
+
+          {isEdit && (
+            <div>
+              <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Status</label>
+              <select
+                name="status"
+                defaultValue={initialData?.status || "todo"}
+                className={INPUT}
+              >
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Description</label>
             <textarea
               name="description"
               rows={2}
+              defaultValue={initialData?.description || ""}
               placeholder="Details, deliverable link, guidelines..."
-              className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+              className={INPUT}
             />
           </div>
 
@@ -132,11 +172,34 @@ export function TaskModal({ projects }: { projects: Project[] }) {
               disabled={loading}
               className="rounded-xl border-2 border-[#1E293B] btn-primary px-5 py-2 text-xs font-black shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 transition-all cursor-pointer"
             >
-              {loading ? "Saving..." : "Save Task"}
+              {loading ? "Saving..." : isEdit ? "Update Task" : "Save Task"}
             </button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export function DeleteTaskButton({ id, name, projectId }: { id: string; name: string; projectId?: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete task "${name}"? This cannot be undone.`)) return;
+    setLoading(true);
+    await deleteTaskAction(id, projectId);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer"
+      title="Delete Task"
+    >
+      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+    </button>
   );
 }

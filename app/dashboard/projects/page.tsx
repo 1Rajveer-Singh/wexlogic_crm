@@ -1,7 +1,7 @@
 import { getProjects, getClients } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateProjects } from "@/utils/auth";
 import { formatINR } from "@/utils/finance-calc";
-import { ProjectModal } from "./project-modal";
+import { ProjectModal, DeleteProjectButton } from "./project-modal";
 import { FolderKanban, ArrowUpRight, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
@@ -129,13 +129,21 @@ export default async function ProjectsPage() {
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
-                    <Link
-                      href={`/dashboard/projects/${proj.id}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-[#1E293B] bg-[#FFFDF5] px-3 py-1 text-xs font-bold text-[#1E293B] shadow-pop-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-                    >
-                      <span>Open Workspace</span>
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </Link>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link
+                        href={`/dashboard/projects/${proj.id}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-[#1E293B] bg-[#FFFDF5] px-3 py-1 text-xs font-bold text-[#1E293B] shadow-pop-sm hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                      >
+                        <span>Open Workspace</span>
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </Link>
+                      {canAdd && (
+                        <>
+                          <ProjectModal clients={clients} initialData={proj} />
+                          <DeleteProjectButton id={proj.id} name={proj.name} />
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

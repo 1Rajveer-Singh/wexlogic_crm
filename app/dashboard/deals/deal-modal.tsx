@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GitPullRequest, X } from "lucide-react";
-import { createDealAction } from "@/app/actions/crm-actions";
-import type { Client, Service } from "@/types/crm";
+import { GitPullRequest, Pencil, X, Trash2 } from "lucide-react";
+import { createDealAction, updateDealAction, deleteDealAction } from "@/app/actions/crm-actions";
+import type { Client, Service, Deal } from "@/types/crm";
 
-export function DealModal({ clients, services }: { clients: Client[]; services: Service[] }) {
+const INPUT = "w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B] focus:outline-none focus:shadow-pop-sm";
+
+export function DealModal({
+  clients,
+  services,
+  initialData,
+}: {
+  clients: Client[];
+  services: Service[];
+  initialData?: Deal;
+}) {
+  const isEdit = !!initialData;
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,17 +27,23 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    await createDealAction({
+    const data = {
       deal_name: form.get("deal_name") as string,
       client_id: form.get("client_id") as string,
       service_id: (form.get("service_id") as string) || null,
       estimated_value: Number(form.get("estimated_value")) || 0,
-      stage: "new",
+      stage: (form.get("stage") as any) || (isEdit ? initialData?.stage : "new"),
       probability: Number(form.get("probability")) || 30,
       expected_close_date: (form.get("expected_close_date") as string) || null,
       source: form.get("source") as string,
       notes: form.get("notes") as string,
-    });
+    };
+
+    if (isEdit) {
+      await updateDealAction(initialData!.id, data);
+    } else {
+      await createDealAction(data);
+    }
 
     setLoading(false);
     setIsOpen(false);
@@ -34,6 +51,17 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
   };
 
   if (!isOpen) {
+    if (isEdit) {
+      return (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all cursor-pointer"
+          title="Edit Deal"
+        >
+          <Pencil className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </button>
+      );
+    }
     return (
       <button
         onClick={() => setIsOpen(true)}
@@ -47,15 +75,15 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg transition-all">
+      <div className="w-full max-w-lg transform overflow-y-auto max-h-[90vh] rounded-2xl bg-white border-2 border-[#1E293B] p-6 text-left shadow-pop-lg transition-all">
         <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E293B]/10">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-[#D97706] border-2 border-[#1E293B]" />
-            <h3 className="text-lg font-black text-[#1E293B]">Create New Deal Opportunity</h3>
+            <h3 className="text-lg font-black text-[#1E293B]">{isEdit ? "Edit Deal Opportunity" : "Create New Deal Opportunity"}</h3>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B]"
+            className="p-1 rounded-lg border-2 border-[#1E293B] bg-slate-50 text-[#1E293B] cursor-pointer"
           >
             <X className="h-4 w-4" strokeWidth={2.5} />
           </button>
@@ -68,18 +96,20 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
               type="text"
               name="deal_name"
               required
+              defaultValue={initialData?.deal_name}
               placeholder="e.g. Annual Digital Retainer"
-              className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+              className={INPUT}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Client *</label>
               <select
                 name="client_id"
                 required
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.client_id || (clients[0]?.id || "")}
+                className={INPUT}
               >
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -92,7 +122,8 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
               <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Primary Service</label>
               <select
                 name="service_id"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.service_id || ""}
+                className={INPUT}
               >
                 <option value="">Select Service</option>
                 {services.map((s) => (
@@ -104,15 +135,16 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Est. Value (₹) *</label>
+              <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Est. Value (?) *</label>
               <input
                 type="number"
                 name="estimated_value"
                 required
+                defaultValue={initialData?.estimated_value}
                 placeholder="400000"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                className={INPUT}
               />
             </div>
             <div>
@@ -122,8 +154,8 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
                 name="probability"
                 min="0"
                 max="100"
-                defaultValue="30"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.probability ?? 30}
+                className={INPUT}
               />
             </div>
             <div>
@@ -131,18 +163,38 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
               <input
                 type="date"
                 name="expected_close_date"
-                className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+                defaultValue={initialData?.expected_close_date || ""}
+                className={INPUT}
               />
             </div>
           </div>
+
+          {isEdit && (
+            <div>
+              <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Stage</label>
+              <select
+                name="stage"
+                defaultValue={initialData?.stage || "new"}
+                className={INPUT}
+              >
+                <option value="new">New</option>
+                <option value="qualified">Qualified</option>
+                <option value="proposal">Proposal</option>
+                <option value="negotiation">Negotiation</option>
+                <option value="won">Won</option>
+                <option value="lost">Lost</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-black uppercase text-[#1E293B] mb-1">Notes</label>
             <textarea
               name="notes"
               rows={2}
+              defaultValue={initialData?.notes || ""}
               placeholder="Terms, discussions, next steps..."
-              className="w-full rounded-xl border-2 border-[#1E293B] bg-[#FFFDF5] p-2 text-xs font-medium text-[#1E293B]"
+              className={INPUT}
             />
           </div>
 
@@ -159,11 +211,34 @@ export function DealModal({ clients, services }: { clients: Client[]; services: 
               disabled={loading}
               className="rounded-xl border-2 border-[#1E293B] btn-primary px-5 py-2 text-xs font-black shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 transition-all cursor-pointer"
             >
-              {loading ? "Creating..." : "Save Deal"}
+              {loading ? "Saving..." : isEdit ? "Update Deal" : "Save Deal"}
             </button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export function DeleteDealButton({ id, name }: { id: string; name: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete deal "${name}"? This cannot be undone.`)) return;
+    setLoading(true);
+    await deleteDealAction(id);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1.5 rounded-lg border-2 border-[#1E293B] bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer"
+      title="Delete Deal"
+    >
+      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+    </button>
   );
 }

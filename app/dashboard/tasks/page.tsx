@@ -1,6 +1,6 @@
 import { getTasks, getProjects } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateTasks } from "@/utils/auth";
-import { TaskModal } from "./task-modal";
+import { TaskModal, DeleteTaskButton } from "./task-modal";
 import { CheckSquare } from "lucide-react";
 import Link from "next/link";
 
@@ -58,9 +58,14 @@ export default async function TasksPage() {
                 <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Due Date
                 </th>
-                <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                <th className="px-3 py-4 text-left text-xs font-black uppercase tracking-wider text-[#1E293B]">
                   Status
                 </th>
+                {canAdd && (
+                  <th className="px-3 py-4 text-right text-xs font-black uppercase tracking-wider text-[#1E293B] pr-6">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#1E293B]/10 bg-white">
@@ -98,7 +103,7 @@ export default async function TasksPage() {
                     <td className="whitespace-nowrap px-3 py-4 text-xs font-medium text-slate-500">
                       {task.due_date ? new Date(task.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                    <td className="whitespace-nowrap px-3 py-4">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black border uppercase tracking-wider ${
                           task.status === "completed"
@@ -109,12 +114,20 @@ export default async function TasksPage() {
                         {task.status.replace("_", " ")}
                       </span>
                     </td>
+                    {canAdd && (
+                      <td className="whitespace-nowrap px-3 py-4 text-right pr-6">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <TaskModal projects={projects} initialData={task} />
+                          <DeleteTaskButton id={task.id} name={task.title} projectId={task.project_id} />
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {tasks.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-sm font-medium text-slate-400">
+                  <td colSpan={canAdd ? 6 : 5} className="py-12 text-center text-sm font-medium text-slate-400">
                     {canAdd ? 'No tasks found. Click "Add Task" to create one.' : "No tasks found."}
                   </td>
                 </tr>

@@ -1,9 +1,9 @@
 import { getLeads } from "@/lib/crm-db";
 import { getCurrentUserRole, canMutateSales } from "@/utils/auth";
 import { formatINR } from "@/utils/finance-calc";
-import { LeadModal } from "./lead-modal";
+import { LeadModal, DeleteLeadButton } from "./lead-modal";
 import { ConvertButton } from "./convert-button";
-import { UserPlus, Filter, Download } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 export default async function LeadsPage() {
   const [leads, role] = await Promise.all([getLeads(), getCurrentUserRole()]);
@@ -135,15 +135,21 @@ export default async function LeadsPage() {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3.5 text-right pr-6">
-                      {lead.status === "won" ? (
-                        <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-300">
-                          ✓ Converted
-                        </span>
-                      ) : canMutate ? (
-                        <ConvertButton leadId={lead.id} leadName={lead.full_name} />
-                      ) : (
-                        <span className="text-xs text-slate-400 font-bold">—</span>
-                      )}
+                      <div className="flex items-center justify-end gap-1.5">
+                        {lead.status === "won" ? (
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-300">✓ Converted</span>
+                        ) : canMutate ? (
+                          <ConvertButton leadId={lead.id} leadName={lead.full_name} />
+                        ) : (
+                          <span className="text-xs text-slate-400 font-bold">—</span>
+                        )}
+                        {canMutate && (
+                          <>
+                            <LeadModal initialData={lead} />
+                            <DeleteLeadButton id={lead.id} name={lead.full_name} />
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

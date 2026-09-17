@@ -293,8 +293,10 @@ export function CalendarClient({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar Grid (3 columns on desktop) */}
         <div className="lg:col-span-3 bg-white rounded-2xl border-2 border-[#1E293B] shadow-pop overflow-hidden">
-          {/* Weekday Headers */}
-          <div className="grid grid-cols-7 border-b-2 border-[#1E293B] bg-slate-50 text-center py-2.5">
+          <div className="overflow-x-auto">
+            <div className="min-w-[640px]">
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 border-b-2 border-[#1E293B] bg-slate-50 text-center py-2.5">
             {daysOfWeek.map((day, idx) => (
               <div
                 key={day}
@@ -372,6 +374,8 @@ export function CalendarClient({
                 </div>
               );
             })}
+          </div>
+            </div>
           </div>
         </div>
 
